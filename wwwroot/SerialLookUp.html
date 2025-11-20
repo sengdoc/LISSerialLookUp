@@ -335,9 +335,14 @@
                         if (!grouped[t.task][t.run]) grouped[t.task][t.run] = [];
                         grouped[t.task][t.run].push(t);
                     });
-
                     Object.keys(grouped).forEach(task => {
                         const runs = grouped[task];
+                        const runKeys = Object.keys(runs).sort((a, b) => a - b); // Sort Run numbers
+                        const lastRunKey = runKeys[runKeys.length - 1];
+                        const lastRunRows = runs[lastRunKey];
+
+                        // Check if last Run has any 'F' status
+                        const lastRunHasFail = lastRunRows.some(t => t.taskStatus === 'F');
 
                         // Latest date tested for Task
                         let latestDate = null;
@@ -354,13 +359,26 @@
                         // Task header
                         const taskRow = document.createElement("tr");
                         taskRow.classList.add("group-header");
+
+                        // Only red text if last Run has 'F'
+                        taskRow.style.color = lastRunHasFail ? '#e74c3c' : '#333'; // red or default dark
+
                         taskRow.innerHTML = `<td colspan="8"> Task: ${task} &nbsp;&nbsp; Last Tested: ${latestDateStr}</td>`;
                         document.querySelector("#testing-table tbody").appendChild(taskRow);
 
+                        // Render Runs under this Task
                         Object.keys(runs).forEach(run => {
                             const runRows = runs[run];
+                            const hasFail = runRows.some(t => t.taskStatus === 'F');
+                            const allPass = runRows.every(t => t.taskStatus !== 'F');
+
                             const runRow = document.createElement("tr");
                             runRow.classList.add("group-run-header");
+
+                            // Run header coloring (soft highlight)
+                            if (hasFail) runRow.style.background = '#ffcccc';
+                            else if (allPass) runRow.style.background = '#d4edda';
+
                             runRow.innerHTML = `<td colspan="8"><span class="icon">&#9654;</span> Run: ${run}</td>`;
                             document.querySelector("#testing-table tbody").appendChild(runRow);
 
@@ -369,19 +387,20 @@
                                 tr.classList.add("group-row");
                                 tr.style.display = "none";
                                 tr.innerHTML = `
-                                    <td>${t.task}</td>
-                                    <td>${t.run}</td>
-                                    <td>${t.testPart}</td>
-                                    <td>${t.description}</td>
-                                    <td>${t.testResult}</td>
-                                    <td>${t.testFault}</td>
-                                    <td class="status-${t.testStatus}">${t.testStatus}</td>
-                                    <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : '-'}</td>
-                                `;
+                <td>${t.task}</td>
+                <td>${t.run}</td>
+                <td>${t.testPart}</td>
+                <td>${t.description}</td>
+                <td>${t.testResult}</td>
+                <td>${t.testFault}</td>
+                <td class="status-${t.testStatus}">${t.testStatus}</td>
+                <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : '-'}</td>
+            `;
                                 document.querySelector("#testing-table tbody").appendChild(tr);
                             });
                         });
                     });
+
 
                     attachTestingToggle();
                 }

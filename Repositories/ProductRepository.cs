@@ -195,14 +195,10 @@ SELECT
     tr.test_result AS TestResult,
     tr.test_fault AS TestFault,
     tr.test_status AS TestStatus,
-    CASE WHEN ts.Failed_Task_Status IS NULL THEN 'P' ELSE ts.Failed_Task_Status END AS TaskStatus
+    CASE WHEN ts.task_status IS NULL THEN 'F' ELSE ts.task_status END AS TaskStatus
 FROM Thailis.dbo.test_result tr
 INNER JOIN Thailis.dbo.part p ON p.part = tr.test_part
-LEFT JOIN (
-    SELECT DISTINCT 'F' AS Failed_Task_Status, serial, task, run_number
-    FROM Thailis.dbo.test_result
-    WHERE test_status = 'F'
-) ts ON ts.serial = tr.serial AND ts.task = tr.task AND ts.run_number = tr.run_number
+LEFT JOIN task_result ts ON ts.serial = tr.serial AND ts.task = tr.task AND ts.run_number = tr.run_number
 LEFT JOIN Thailis.dbo.GEA_serial_track ge ON ge.serial_FPA = tr.serial
 LEFT JOIN Thailis.dbo.Haier_serial_track ha ON ha.serial_FPA = tr.serial
 WHERE tr.serial = @serial
