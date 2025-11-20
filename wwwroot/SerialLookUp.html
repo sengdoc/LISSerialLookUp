@@ -4,7 +4,173 @@
     <meta charset="UTF-8">
     <title>Serial Lookup</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" rel="stylesheet">
-    <link href="css/SerialLook.css" rel="stylesheet" />
+    <style>
+        /* ===== Your CSS ===== */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+            color: #333;
+        }
+
+        .section {
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            max-width: 1800px;
+        }
+
+        input, button {
+            padding: 10px;
+            font-size: 14px;
+            margin-right: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #4cd137;
+            color: white;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+        }
+
+            button:hover {
+                background-color: #44bd32;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #273c75;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f1f2f6;
+        }
+
+        .status-P {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-R, .status-F {
+            color: red;
+            font-weight: bold;
+        }
+
+        .collapsible {
+            background-color: #40739e;
+            color: white;
+            cursor: pointer;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+            .collapsible.active {
+                background-color: #3498db;
+            }
+
+        .content {
+            display: block;
+            padding: 10px 0;
+        }
+
+        .group-header {
+            background: #dcdde1;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .group-run-header {
+            background: #e0e5ec;
+            cursor: pointer;
+            font-weight: normal;
+            padding-left: 20px;
+        }
+
+        .icon {
+            display: inline-block;
+            margin-right: 8px;
+            transition: transform 0.2s;
+        }
+
+            .icon.rotate {
+                transform: rotate(90deg);
+            }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .two-tables-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+            .two-tables-grid table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .two-tables-grid th, .two-tables-grid td {
+                padding: 8px;
+                border: 1px solid #ddd;
+                text-align: left;
+            }
+    </style>
 </head>
 <body>
 
@@ -69,10 +235,12 @@
                     <tr>
                         <th>Task</th>
                         <th>Run</th>
+                        <th>TestPart</th>
                         <th>Description</th>
                         <th>Result</th>
                         <th>Fault</th>
                         <th>Status</th>
+                        <th>Date Tested</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -98,6 +266,17 @@
     </div>
 
     <script>
+        // Format date as dd/mm/yyyy : hh:mm:ss
+        function formatDate(dt) {
+            const d = dt.getDate().toString().padStart(2, '0');
+            const m = (dt.getMonth() + 1).toString().padStart(2, '0');
+            const y = dt.getFullYear();
+            const h = dt.getHours().toString().padStart(2, '0');
+            const min = dt.getMinutes().toString().padStart(2, '0');
+            const s = dt.getSeconds().toString().padStart(2, '0');
+            return `${d}/${m}/${y} : ${h}:${min}:${s}`;
+        }
+
         async function loadData() {
             const serial = document.getElementById("serialInput").value.trim();
             if (!serial) { alert("Please enter a serial number."); return; }
@@ -119,7 +298,7 @@
                 document.getElementById("serialHAIER").textContent = pd.serialHAIER || "-";
                 document.getElementById("part").textContent = pd.part || "-";
                 document.getElementById("partIssue").textContent = pd.partIssue || "-";
-                document.getElementById("serialIssueDate").textContent = pd.serialIssueDate ? new Date(pd.serialIssueDate).toLocaleString() : "-";
+                document.getElementById("serialIssueDate").textContent = pd.serialIssueDate ? formatDate(new Date(pd.serialIssueDate)) : "-";
                 document.getElementById("vaI_FoamCode").textContent = pd.vaI_FoamCode || "-";
 
                 // Clear old tables
@@ -138,53 +317,69 @@
                         <td>${t.grade}</td>
                         <td>${t.zone}</td>
                         <td>${t.store}</td>
-                        <td>${t.lastMaint ? new Date(t.lastMaint).toLocaleString() : '-'}</td>
+                        <td>${t.lastMaint ? formatDate(new Date(t.lastMaint)) : '-'}</td>
                         <td>${t.lastMaintLogon || '-'}</td>
                         <td>${t.updateReference || '-'}</td>
                         <td>${t.orderNumber || '-'}</td>
                         <td>${t.rejectReason || '-'}</td>
-                    `;
+                        `;
                         document.querySelector("#tracking-table tbody").appendChild(tr);
                     });
                 }
 
-                // Testing table - grouped by Task (collapsed by default)
+                // Testing table - grouped by Task then Run
                 if (data.testing && data.testing.length > 0) {
-                    const groupedTesting = {};
+                    const grouped = {};
                     data.testing.forEach(t => {
-                        if (!groupedTesting[t.task]) groupedTesting[t.task] = [];
-                        groupedTesting[t.task].push(t);
+                        if (!grouped[t.task]) grouped[t.task] = {};
+                        if (!grouped[t.task][t.run]) grouped[t.task][t.run] = [];
+                        grouped[t.task][t.run].push(t);
                     });
 
-                    Object.keys(groupedTesting).forEach(task => {
-                        const taskRows = groupedTesting[task];
-                        const lastTested = taskRows
-                            .map(t => t.dateTested ? new Date(t.dateTested) : null)
-                            .filter(d => d !== null)
-                            .sort((a, b) => b - a)[0];
+                    Object.keys(grouped).forEach(task => {
+                        const runs = grouped[task];
 
-                        const headerRow = document.createElement("tr");
-                        headerRow.classList.add("group-header");
-                        headerRow.innerHTML = `
-                        <td colspan="6">
-                            <span class="icon">&#9654;</span> Task: ${task} &nbsp;&nbsp; Last Tested: ${lastTested ? lastTested.toLocaleString() : '-'}
-                        </td>
-                    `;
-                        document.querySelector("#testing-table tbody").appendChild(headerRow);
+                        // Latest date tested for Task
+                        let latestDate = null;
+                        Object.values(runs).forEach(runArr => {
+                            runArr.forEach(t => {
+                                if (t.dateTested) {
+                                    const dt = new Date(t.dateTested);
+                                    if (!latestDate || dt > latestDate) latestDate = dt;
+                                }
+                            });
+                        });
+                        const latestDateStr = latestDate ? formatDate(latestDate) : '-';
 
-                        taskRows.forEach(t => {
-                            const tr = document.createElement("tr");
-                            tr.classList.add("group-row");
-                            tr.style.display = "none"; // ← collapsed by default
-                            tr.innerHTML = `
-                            <td>${t.task}</td>
-                            <td>${t.run}</td>
-                            <td>${t.description}</td>
-                            <td>${t.testResult}</td>
-                            <td>${t.testFault}</td>
-                            <td class="status-${t.testStatus}">${t.testStatus}</td>
-                        `;
-                            document.querySelector("#testing-table tbody").appendChild(tr);
+                        // Task header
+                        const taskRow = document.createElement("tr");
+                        taskRow.classList.add("group-header");
+                        taskRow.innerHTML = `<td colspan="8"> Task: ${task} &nbsp;&nbsp; Last Tested: ${latestDateStr}</td>`;
+                        document.querySelector("#testing-table tbody").appendChild(taskRow);
+
+                        Object.keys(runs).forEach(run => {
+                            const runRows = runs[run];
+                            const runRow = document.createElement("tr");
+                            runRow.classList.add("group-run-header");
+                            runRow.innerHTML = `<td colspan="8"><span class="icon">&#9654;</span> Run: ${run}</td>`;
+                            document.querySelector("#testing-table tbody").appendChild(runRow);
+
+                            runRows.forEach(t => {
+                                const tr = document.createElement("tr");
+                                tr.classList.add("group-row");
+                                tr.style.display = "none";
+                                tr.innerHTML = `
+                                    <td>${t.task}</td>
+                                    <td>${t.run}</td>
+                                    <td>${t.testPart}</td>
+                                    <td>${t.description}</td>
+                                    <td>${t.testResult}</td>
+                                    <td>${t.testFault}</td>
+                                    <td class="status-${t.testStatus}">${t.testStatus}</td>
+                                    <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : '-'}</td>
+                                `;
+                                document.querySelector("#testing-table tbody").appendChild(tr);
+                            });
                         });
                     });
 
@@ -196,13 +391,13 @@
                     data.reworkRecords.forEach(r => {
                         const tr = document.createElement("tr");
                         tr.innerHTML = `
-                        <td>${r.part}</td>
-                        <td>${r.dateRecorded ? new Date(r.dateRecorded).toLocaleString() : '-'}</td>
-                        <td>${r.areaRecorded}</td>
-                        <td>${r.rwkRepairCode}</td>
-                        <td>${r.rwkFaultCode}</td>
-                        <td>${r.mold}</td>
-                    `;
+                            <td>${r.part}</td>
+                            <td>${r.dateRecorded ? formatDate(new Date(r.dateRecorded)) : '-'}</td>
+                            <td>${r.areaRecorded}</td>
+                            <td>${r.rwkRepairCode}</td>
+                            <td>${r.rwkFaultCode}</td>
+                            <td>${r.mold}</td>
+                        `;
                         document.querySelector("#rework-table tbody").appendChild(tr);
                     });
                 }
@@ -214,16 +409,16 @@
             }
         }
 
-        // Testing group toggle
         function attachTestingToggle() {
-            document.querySelectorAll("#testing-table .group-header").forEach(header => {
+            document.querySelectorAll("#testing-table .group-header, #testing-table .group-run-header").forEach(header => {
                 header.addEventListener("click", () => {
                     header.classList.toggle("active");
                     const icon = header.querySelector(".icon");
-                    icon.classList.toggle("rotate");
+                    if (icon) icon.classList.toggle("rotate");
 
                     let next = header.nextElementSibling;
-                    while (next && next.classList.contains("group-row")) {
+                    while (next && (next.classList.contains("group-row") || next.classList.contains("group-run-header"))) {
+                        if (header.classList.contains("group-header") && next.classList.contains("group-run-header")) break;
                         const isHidden = window.getComputedStyle(next).display === "none";
                         next.style.display = isHidden ? "table-row" : "none";
                         next = next.nextElementSibling;
@@ -232,7 +427,7 @@
             });
         }
 
-        // Collapsible sections (Tracking, Testing, Rework)
+        // Collapsible sections
         document.querySelectorAll(".collapsible").forEach(btn => {
             btn.addEventListener("click", () => {
                 btn.classList.toggle("active");
@@ -241,5 +436,6 @@
             });
         });
     </script>
+
 </body>
 </html>
