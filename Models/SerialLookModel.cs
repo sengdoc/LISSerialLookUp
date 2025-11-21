@@ -8,6 +8,8 @@ public class ProductDetails
     public string? PartIssue { get; set; }
     public DateTime? SerialIssueDate { get; set; }
     public string? VAI_FoamCode { get; set; }
+
+    public string? Status { get; set; }
 }
 public class TrackingInfo
 {

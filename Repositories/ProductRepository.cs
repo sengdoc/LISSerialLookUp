@@ -31,79 +31,67 @@ public class ProductRepository : IProductRepository
     public async Task<ProductDetails?> GetProductDetailsBySerialAsync(string serial)
     {
         const string sql = @"
-IF (SELECT COUNT(serial_FPA) 
-    FROM Thailis.dbo.GEA_serial_track 
-    WHERE serial_FPA = @serial OR serial_GEA = @serial) = 1
-BEGIN
-    SELECT 
+;WITH VAI AS (
+    SELECT
+        ps.part,
+        REPLICATE('0', 4 - LEN(ppdVAI.property_value)) + ppdVAI.property_value AS vai_code
+    FROM dbo.part_structure ps
+    JOIN dbo.part p ON ps.component = p.part AND p.class = 'VAI MODEL GROUP'
+    JOIN dbo.part_property_data ppdVAI ON p.part = ppdVAI.part AND ppdVAI.property = 'MODEL GROUP'
+    WHERE ps.task = 2200
+),
+Serials AS (
+    SELECT
         st.serial_FPA AS SerialFPA,
         st.serial_GEA AS SerialGEA,
         '-' AS SerialHAIER,
-        p.part + ' ' + p.description AS Part,
-        st.part_issue AS PartIssue,
-        st.serial_issue_date AS SerialIssueDate,
-        ISNULL(vai.vai_code, '-') AS VAI_FoamCode
-    FROM Thailis.dbo.part p
-    JOIN Thailis.dbo.GEA_serial_track st ON p.part = st.part
-    LEFT JOIN (
-        SELECT
-            ps.part, ps.task, ps.component,
-            REPLICATE('0', 4 - LEN(ppdVAI.property_value)) + ppdVAI.property_value AS vai_code
-        FROM dbo.part_structure ps
-        JOIN dbo.part p ON ps.component = p.part AND p.class = 'VAI MODEL GROUP'
-        JOIN dbo.part_property_data ppdVAI ON p.part = ppdVAI.part AND ppdVAI.property = 'MODEL GROUP'
-        WHERE ps.task = 2200
-    ) vai ON p.part = vai.part
-    WHERE st.serial_FPA = @serial OR st.serial_GEA = @serial;
-END
-ELSE IF (SELECT COUNT(serial_FPA) 
-         FROM Thailis.dbo.HAIER_serial_track 
-         WHERE serial_FPA = @serial OR serial_HAIER = @serial) = 1
-BEGIN
-    SELECT 
+        st.part,
+        st.part_issue,
+        st.serial_issue_date,
+        st.status
+    FROM Thailis.dbo.GEA_serial_track st
+    WHERE @serial IN (st.serial_FPA, st.serial_GEA)
+    
+    UNION ALL
+
+    SELECT
         st.serial_FPA AS SerialFPA,
         '-' AS SerialGEA,
         st.serial_HAIER AS SerialHAIER,
-        p.part + ' ' + p.description AS Part,
-        st.part_issue AS PartIssue,
-        st.serial_issue_date AS SerialIssueDate,
-        ISNULL(vai.vai_code, '-') AS VAI_FoamCode
-    FROM Thailis.dbo.part p
-    JOIN Thailis.dbo.HAIER_serial_track st ON p.part = st.part
-    LEFT JOIN (
-        SELECT
-            ps.part, ps.task, ps.component,
-            REPLICATE('0', 4 - LEN(ppdVAI.property_value)) + ppdVAI.property_value AS vai_code
-        FROM dbo.part_structure ps
-        JOIN dbo.part p ON ps.component = p.part AND p.class = 'VAI MODEL GROUP'
-        JOIN dbo.part_property_data ppdVAI ON p.part = ppdVAI.part AND ppdVAI.property = 'MODEL GROUP'
-        WHERE ps.task = 2200
-    ) vai ON p.part = vai.part
-    WHERE st.serial_FPA = @serial OR st.serial_HAIER = @serial;
-END
-ELSE
-BEGIN
-    SELECT 
+        st.part,
+        st.part_issue,
+        st.serial_issue_date,
+        st.status
+    FROM Thailis.dbo.HAIER_serial_track st
+    WHERE @serial IN (st.serial_FPA, st.serial_HAIER)
+    
+    UNION ALL
+
+    SELECT
         st.serial AS SerialFPA,
         '-' AS SerialGEA,
         '-' AS SerialHAIER,
-        p.part + ' ' + p.description AS Part,
-        st.part_issue AS PartIssue,
-        st.serial_issue_date AS SerialIssueDate,
-        ISNULL(vai.vai_code, '-') AS VAI_FoamCode
-    FROM Thailis.dbo.part p
-    JOIN Thailis.dbo.serial_track st ON p.part = st.part
-    LEFT JOIN (
-        SELECT
-            ps.part, ps.task, ps.component,
-            REPLICATE('0', 4 - LEN(ppdVAI.property_value)) + ppdVAI.property_value AS vai_code
-        FROM dbo.part_structure ps
-        JOIN dbo.part p ON ps.component = p.part AND p.class = 'VAI MODEL GROUP'
-        JOIN dbo.part_property_data ppdVAI ON p.part = ppdVAI.part AND ppdVAI.property = 'MODEL GROUP'
-        WHERE ps.task = 2200
-    ) vai ON p.part = vai.part
-    WHERE st.serial = @serial;
-END";
+        st.part,
+        st.part_issue,
+        st.serial_issue_date,
+        st.status
+    FROM Thailis.dbo.serial_track st
+    WHERE st.serial = @serial
+)
+SELECT TOP 1
+    s.SerialFPA,
+    s.SerialGEA,
+    s.SerialHAIER,
+    p.part + ' ' + p.description AS Part,
+    s.part_issue AS PartIssue,
+    s.serial_issue_date AS SerialIssueDate,
+    ISNULL(vai.vai_code, '-') AS VAI_FoamCode,
+    s.status
+FROM Serials s
+JOIN Thailis.dbo.part p ON p.part = s.part
+LEFT JOIN VAI vai ON p.part = vai.part;
+";
+
 
         using var conn = CreateConnection();
         return await conn.QueryFirstOrDefaultAsync<ProductDetails>(sql, new { serial });
