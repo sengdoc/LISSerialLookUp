@@ -38,6 +38,7 @@ public class TestingInfo
     public string? TestFault { get; set; }
     public string? TestStatus { get; set; }
     public string? TaskStatus { get; set; }
+    public string? TaskDescription { get; set; }
 }
 
 

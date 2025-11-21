@@ -173,6 +173,7 @@ END";
     public async Task<List<TestingInfo>> GetTestingInfoAsync(string serial)
     {
         const string sql = @"
+-- 1. Direct serial in test_result
 SELECT 
     tr.task AS Task,
     tr.run_number AS Run,
@@ -183,16 +184,72 @@ SELECT
     tr.test_result AS TestResult,
     tr.test_fault AS TestFault,
     tr.test_status AS TestStatus,
-    CASE WHEN ts.task_status IS NULL THEN 'F' ELSE ts.task_status END AS TaskStatus
+    ISNULL(ts.task_status, 'F') AS TaskStatus,
+    tkd.description AS TaskDescription
 FROM Thailis.dbo.test_result tr
-INNER JOIN Thailis.dbo.part p ON p.part = tr.test_part
-LEFT JOIN task_result ts ON ts.serial = tr.serial AND ts.task = tr.task AND ts.run_number = tr.run_number
-LEFT JOIN Thailis.dbo.GEA_serial_track ge ON ge.serial_FPA = tr.serial
-LEFT JOIN Thailis.dbo.Haier_serial_track ha ON ha.serial_FPA = tr.serial
+INNER JOIN Thailis.dbo.part p 
+    ON p.part = tr.test_part
+LEFT JOIN Thailis.dbo.task_result ts 
+    ON ts.serial = tr.serial AND ts.task = tr.task AND ts.run_number = tr.run_number
+LEFT JOIN Thailis.dbo.task tkd 
+    ON tkd.task = tr.task
 WHERE tr.serial = @serial
-   OR ge.serial_GEA = @serial
-   OR ha.serial_HAIER = @serial
-ORDER BY tr.date_tested;";
+
+UNION ALL
+
+-- 2. Serial found via GEA table
+SELECT 
+    tr.task AS Task,
+    tr.run_number AS Run,
+    tr.date_tested AS DateTested,
+    tr.test_part AS TestPart,
+    p.description AS Description,
+    tr.task_reference AS TaskReference,
+    tr.test_result AS TestResult,
+    tr.test_fault AS TestFault,
+    tr.test_status AS TestStatus,
+    ISNULL(ts.task_status, 'F') AS TaskStatus,
+    tkd.description AS TaskDescription
+FROM Thailis.dbo.GEA_serial_track ge
+INNER JOIN Thailis.dbo.test_result tr
+    ON tr.serial = ge.serial_FPA
+INNER JOIN Thailis.dbo.part p 
+    ON p.part = tr.test_part
+LEFT JOIN Thailis.dbo.task_result ts 
+    ON ts.serial = tr.serial AND ts.task = tr.task AND ts.run_number = tr.run_number
+LEFT JOIN Thailis.dbo.task tkd 
+    ON tkd.task = tr.task
+WHERE ge.serial_GEA = @serial
+
+UNION ALL
+
+-- 3. Serial found via Haier table
+SELECT 
+    tr.task AS Task,
+    tr.run_number AS Run,
+    tr.date_tested AS DateTested,
+    tr.test_part AS TestPart,
+    p.description AS Description,
+    tr.task_reference AS TaskReference,
+    tr.test_result AS TestResult,
+    tr.test_fault AS TestFault,
+    tr.test_status AS TestStatus,
+    ISNULL(ts.task_status, 'F') AS TaskStatus,
+    tkd.description AS TaskDescription
+FROM Thailis.dbo.Haier_serial_track ha
+INNER JOIN Thailis.dbo.test_result tr
+    ON tr.serial = ha.serial_FPA
+INNER JOIN Thailis.dbo.part p 
+    ON p.part = tr.test_part
+LEFT JOIN Thailis.dbo.task_result ts 
+    ON ts.serial = tr.serial AND ts.task = tr.task AND ts.run_number = tr.run_number
+LEFT JOIN Thailis.dbo.task tkd 
+    ON tkd.task = tr.task
+WHERE ha.serial_HAIER = @serial
+
+ORDER BY DateTested;
+";
+
 
         using var conn = CreateConnection();
         return (await conn.QueryAsync<TestingInfo>(sql, new { serial })).ToList();

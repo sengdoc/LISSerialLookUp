@@ -18,7 +18,7 @@ public class ProductController : ControllerBase
         if (string.IsNullOrWhiteSpace(serial))
             return BadRequest("serial is required");
 
-           var result = await _repo.GetProductAggregateAsync(serial);
+        var result = await _repo.GetProductAggregateAsync(serial);
 
         //// Save to JSON file
         //var filePath = "debug_result.json";
