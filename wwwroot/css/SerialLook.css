@@ -1,103 +1,156 @@
-﻿body, html {
+﻿/* ===============================
+   Modern Minimal Clear UI
+   =============================== */
+:root {
+    --primary-dark: #2C3E50; /* main header, table headers */
+    --primary: #34495E; /* section background, collapsibles */
+    --accent: #1ABC9C; /* buttons, highlights */
+    --success: #27AE60; /* pass status */
+    --danger: #C0392B; /* fail status */
+    --light-gray: #BDC3C7; /* group headers, row stripes */
+    --bg: #F9FAFB; /* body background (lighter than before) */
+    --text-dark: #2C3E50; /* main text */
+    --text-light: #7F8C8D; /* secondary text */
+}
+
+/* Base */
+body, html {
     margin: 0;
     padding: 0;
     height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f5f6fa;
-    color: #333;
+    background: var(--bg);
+    color: var(--text-dark);
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .section {
     margin: 20px auto;
     background: #fff;
-    padding: 20px;
+    padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     max-width: 1800px;
 }
 
+/* Inputs & Buttons */
 input, button {
-    padding: 10px;
+    padding: 10px 12px;
     font-size: 14px;
     margin-right: 5px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+    border-radius: 6px;
+    border: 1px solid var(--light-gray);
+    outline: none;
+    transition: all 0.2s;
 }
 
+    input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 5px rgba(26,188,156,0.3);
+    }
+
 button {
-    background-color: #4cd137;
+    background-color: var(--accent);
     color: white;
     cursor: pointer;
     border: none;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.1s;
 }
 
     button:hover {
-        background-color: #44bd32;
+        background-color: #16a085;
+        transform: translateY(-1px);
     }
 
+/* Tables */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
+    font-size: 14px;
 }
 
 th, td {
-    padding: 10px;
-    border: 1px solid #ddd;
+    padding: 12px 10px;
+    border: 1px solid #e1e4e8;
     text-align: left;
 }
 
 th {
-    background: #273c75;
+    background: var(--primary-dark);
     color: white;
+    font-weight: 600;
 }
 
 tr:nth-child(even) {
-    background: #f1f2f6;
+    background: #fdfdfd;
 }
 
+tr:hover {
+    background: #f1f5f8;
+}
+
+/* Status Colors */
 .status-P {
-    color: green;
+    color: var(--success);
     font-weight: bold;
 }
 
 .status-R {
-    color: red;
+    color: var(--danger);
+    font-weight: bold;
+}
+
+.status-D {
+    color: #8e44ad;
+    font-weight: bold;
+}
+
+.status-N {
+    color: #f39c12;
     font-weight: bold;
 }
 
 /* Collapsible */
 .collapsible {
-    background-color: #40739e;
+    background-color: var(--primary);
     color: white;
     cursor: pointer;
-    padding: 12px;
+    padding: 14px 16px;
     width: 100%;
     border: none;
     text-align: left;
-    font-size: 16px;
-    border-radius: 5px;
+    font-size: 15px;
+    border-radius: 6px;
     margin-top: 10px;
+    transition: background 0.2s;
 }
 
     .collapsible.active {
-        background-color: #3498db;
+        background-color: var(--primary-dark);
     }
 
 .content {
     display: block;
-    padding: 10px 0;
+    padding: 12px 0;
 }
-/* default expanded */
 
 /* Task group rows */
 .group-header {
-    background: #dcdde1;
+    background: #f5f7fa;
     cursor: pointer;
     font-weight: bold;
 }
 
+.group-run-header {
+    background: #ebeff2;
+    cursor: pointer;
+    font-weight: normal;
+    padding-left: 20px;
+}
+
+/* Icon */
 .icon {
     display: inline-block;
     margin-right: 8px;
@@ -115,7 +168,7 @@ tr:nth-child(even) {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.8);
     display: none;
     justify-content: center;
     align-items: center;
@@ -127,7 +180,7 @@ tr:nth-child(even) {
     width: 50px;
     height: 50px;
     border: 5px solid #f3f3f3;
-    border-top: 5px solid #3498db;
+    border-top: 5px solid var(--accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 10px;
@@ -156,7 +209,7 @@ tr:nth-child(even) {
     }
 
     .two-tables-grid th, .two-tables-grid td {
-        padding: 8px;
-        border: 1px solid #ddd;
+        padding: 10px;
+        border: 1px solid #e1e4e8;
         text-align: left;
     }
