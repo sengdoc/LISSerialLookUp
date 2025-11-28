@@ -5,21 +5,23 @@
     <title>Serial Lookup</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" rel="stylesheet">
     <link href="css/SerialLook.css" rel="stylesheet" />
-
 </head>
 <body>
+    <!-- Loading overlay -->
     <div class="loading-overlay" id="loading">
         <div class="spinner"></div>
         <div class="text">Loading...</div>
     </div>
 
     <div class="section left-card">
+        <!-- Search input -->
         <div>
             <input type="text" id="serialInput" placeholder="Enter serial number">
             <button onclick="loadData()">Search</button>
         </div>
 
         <div class="two-tables-grid">
+            <!-- Product Details -->
             <div>
                 <h3>Product Details</h3>
                 <table>
@@ -36,6 +38,7 @@
                 </table>
             </div>
 
+            <!-- Tracking Information -->
             <div>
                 <button class="collapsible active">Tracking Information</button>
                 <div class="content" id="tracking-content">
@@ -51,7 +54,7 @@
                                 <th>Last Maint</th>
                                 <th>Last Maint Logon</th>
                                 <th>Update Ref</th>
-                                <th>Order No</th>
+                                <th>Order Number</th>
                                 <th>Reject Reason</th>
                             </tr>
                         </thead>
@@ -61,6 +64,7 @@
             </div>
         </div>
 
+        <!-- Testing Information -->
         <button class="collapsible active">Testing Information</button>
         <div class="content" id="testing-content">
             <table id="testing-table">
@@ -68,6 +72,7 @@
             </table>
         </div>
 
+        <!-- Rework Records -->
         <button class="collapsible active">Rework Records</button>
         <div class="content">
             <table id="rework-table">
@@ -141,11 +146,11 @@
                                 <td>${t.grade}</td>
                                 <td>${t.zone}</td>
                                 <td>${t.store}</td>
-                                <td>${t.lastMaint ? formatDate(new Date(t.lastMaint)) : '-'}</td>
-                                <td>${t.lastMaintLogon || '-'}</td>
-                                <td>${t.updateReference || '-'}</td>
-                                <td>${t.orderNumber || '-'}</td>
-                                <td>${t.rejectReason || '-'}</td>
+                                <td>${t.last_maint ? formatDate(new Date(t.last_maint)) : '-'}</td>
+                                <td>${t.last_maint_logon || '-'}</td>
+                                <td>${t.update_reference || '-'}</td>
+                                <td>${t.order_no || '-'}</td>
+                                <td>${t.reject_reason || '-'}</td>
                             `;
                         document.querySelector("#tracking-table tbody").appendChild(tr);
                     });
@@ -157,6 +162,7 @@
 
                 // Testing table
                 if (data.testing && data.testing.length > 0) {
+                    // Grouping by task/run for collapsible display
                     const grouped = {};
                     data.testing.forEach(t => {
                         if (!grouped[t.task]) grouped[t.task] = {};
@@ -170,30 +176,8 @@
                         const runKeys = Object.keys(runs).sort((a, b) => a - b);
                         const lastRunKey = runKeys[runKeys.length - 1];
                         const lastRunRows = runs[lastRunKey];
-                        const lastRunHasFail = lastRunRows.some(t => t.taskStatus === "F");
+                        const lastRunHasFail = lastRunRows.some(t => t.testStatus === "F");
 
-                        // Latest date
-                        let latestDate = null;
-                        Object.values(runs).forEach(runArr => runArr.forEach(t => {
-                            if (t.dateTested) {
-                                const dt = new Date(t.dateTested);
-                                if (!latestDate || dt > latestDate) latestDate = dt;
-                            }
-                        }));
-                        const latestDateStr = latestDate ? formatDate(latestDate) : "-";
-
-                        // Task description
-                        const firstRunTask = Object.values(runs)[0][0];
-                        const taskDes = firstRunTask ? firstRunTask.taskDescription : "-";
-
-                        // Task header
-                        //const taskRow = document.createElement("tr");
-                        //taskRow.classList.add("group-header");
-                        //taskRow.style.color = lastRunHasFail ? "#e74c3c" : "#333";
-                        //taskRow.innerHTML = `<td colspan="8">Task: ${task}</td>`;
-                        //tbody.appendChild(taskRow);
-
-                        // Run headers and rows
                         Object.keys(runs).forEach(run => {
                             const runRows = runs[run];
                             const hasFail = runRows.some(t => t.testStatus === "F");
@@ -206,31 +190,11 @@
                             if (run === lastRunKey && lastRunHasFail) runRow.style.background = "#ff6b6b";
                             runRow.innerHTML = `
                                     <td><span class="icon">&#9654;</span> Task: ${task}</td>
-                                    <td>${taskDes}</td>
-                                    <td>Run: ${run}</td>
-                                    <td>${latestDateStr}</td>
+                                    <td colspan="3">Run: ${run}</td>
                                 `;
                             runRow.style.fontWeight = "bold";
                             runRow.style.cursor = "pointer";
                             tbody.appendChild(runRow);
-
-                            // Mini-header row
-                            const miniHeader = document.createElement("tr");
-                            miniHeader.classList.add("group-row");
-                            miniHeader.style.display = "none";
-                            miniHeader.style.fontWeight = "bold";
-                            miniHeader.style.background = "#dcdde1";
-                            miniHeader.innerHTML = `
-                                    <td>Task</td>
-                                    <td>Run</td>
-                                    <td>TestPart</td>
-                                    <td>Description</td>
-                                    <td>Result</td>
-                                    <td>Fault</td>
-                                    <td>Status</td>
-                                    <td>Date Tested</td>
-                                `;
-                            tbody.appendChild(miniHeader);
 
                             // Test rows
                             runRows.forEach(t => {
@@ -251,7 +215,6 @@
                             });
                         });
                     });
-
                     attachTestingToggle();
                 } else {
                     const tbody = document.querySelector("#testing-table tbody");
@@ -290,13 +253,12 @@
 
         function attachTestingToggle() {
             const tbody = document.querySelector("#testing-table tbody");
-            tbody.querySelectorAll(".group-header, .group-run-header").forEach(header => {
+            tbody.querySelectorAll(".group-run-header").forEach(header => {
                 header.addEventListener("click", () => {
                     const icon = header.querySelector(".icon");
                     if (icon) icon.classList.toggle("rotate");
                     let next = header.nextElementSibling;
-                    while (next && (next.classList.contains("group-run-header") || next.classList.contains("group-row"))) {
-                        if (header.classList.contains("group-run-header") && next.classList.contains("group-run-header")) break;
+                    while (next && next.classList.contains("group-row")) {
                         next.style.display = (next.style.display === "none") ? "table-row" : "none";
                         next = next.nextElementSibling;
                     }

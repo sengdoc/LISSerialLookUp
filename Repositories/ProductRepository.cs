@@ -98,11 +98,12 @@ LEFT JOIN VAI vai ON p.part = vai.part;
     }
 
 
-
     public async Task<List<TrackingInfo>> GetTrackingInfoAsync(string serial)
     {
         const string sql = @"
-IF (SELECT COUNT(DISTINCT serial_GEA) FROM Thailis.dbo.GEA_serial_track WHERE serial_GEA = @serial) = 1
+DECLARE @Serial VARCHAR(50) = @serial;
+
+IF EXISTS (SELECT 1 FROM Thailis.dbo.GEA_serial_track WHERE serial_GEA = @Serial)
 BEGIN
     SELECT th.workcell,
            th.task,
@@ -114,16 +115,19 @@ BEGIN
            th.last_maint,
            th.last_maint_logon,
            th.update_reference,
-           ge.serial_GEA AS serial,
-           ci.last_maint_logon AS reject_reason
+           ci.last_maint_logon AS reject_reason,
+           stod.order_no
     FROM track_history AS th
-    INNER JOIN GEA_serial_track AS ge ON th.serial = ge.serial_FPA
+    INNER JOIN Thailis.dbo.GEA_serial_track AS ge 
+        ON th.serial = ge.serial_FPA
     LEFT JOIN component_inventory AS ci 
         ON th.store = ci.part AND ci.store_location = 'RJREASON'
-    WHERE ge.serial_GEA = @serial
-    ORDER BY th.last_maint
+    LEFT JOIN serial_track_sod AS stod 
+        ON th.serial = stod.serial
+    WHERE ge.serial_GEA = @Serial
+    ORDER BY th.last_maint;
 END
-ELSE IF (SELECT COUNT(DISTINCT serial_HAIER) FROM Thailis.dbo.Haier_serial_track WHERE serial_HAIER = @serial) = 1
+ELSE IF EXISTS (SELECT 1 FROM Thailis.dbo.Haier_serial_track WHERE serial_HAIER = @Serial)
 BEGIN
     SELECT th.workcell,
            th.task,
@@ -135,14 +139,17 @@ BEGIN
            th.last_maint,
            th.last_maint_logon,
            th.update_reference,
-           ha.serial_HAIER AS serial,
-           ci.last_maint_logon AS reject_reason
+           ci.last_maint_logon AS reject_reason,
+           stod.order_no
     FROM track_history AS th
-    INNER JOIN Haier_serial_track AS ha ON th.serial = ha.serial_FPA
+    INNER JOIN Thailis.dbo.Haier_serial_track AS ha 
+        ON th.serial = ha.serial_FPA
     LEFT JOIN component_inventory AS ci 
         ON th.store = ci.part AND ci.store_location = 'RJREASON'
-    WHERE ha.serial_HAIER = @serial
-    ORDER BY th.last_maint
+    LEFT JOIN serial_track_sod AS stod 
+        ON th.serial = stod.serial
+    WHERE ha.serial_HAIER = @Serial
+    ORDER BY th.last_maint;
 END
 ELSE
 BEGIN
@@ -156,18 +163,21 @@ BEGIN
            th.last_maint,
            th.last_maint_logon,
            th.update_reference,
-           th.serial,
-           ci.last_maint_logon AS reject_reason
+           ci.last_maint_logon AS reject_reason,
+           stod.order_no
     FROM track_history AS th
     LEFT JOIN component_inventory AS ci 
         ON th.store = ci.part AND ci.store_location = 'RJREASON'
-    WHERE th.serial = @serial
-    ORDER BY th.last_maint
+    LEFT JOIN serial_track_sod AS stod 
+        ON th.serial = stod.serial
+    WHERE th.serial = @Serial
+    ORDER BY th.last_maint;
 END";
 
         using var conn = CreateConnection();
         return (await conn.QueryAsync<TrackingInfo>(sql, new { serial })).ToList();
     }
+
 
 
     public async Task<List<TestingInfo>> GetTestingInfoAsync(string serial)

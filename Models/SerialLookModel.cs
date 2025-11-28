@@ -13,19 +13,26 @@ public class ProductDetails
 }
 public class TrackingInfo
 {
-    public int Workcell { get; set; }
-    public int Task { get; set; }
-    public string? StoreLocation { get; set; }
-    public string? Status { get; set; }
-    public string? Grade { get; set; }
-    public DateTime? LastMaint { get; set; }
-    public string? LastMaintLogon { get; set; }
-    public int Zone { get; set; }
-    public string? Store { get; set; }
-    public string? UpdateReference { get; set; }
-    public string? OrderNumber { get; set; }
-    public string? RejectReason { get; set; }
+    public int workcell { get; set; }
+    public int task { get; set; }
+    public string? store_location { get; set; }
+    public string? status { get; set; }
+    public string? grade { get; set; }
+    public DateTime? last_maint { get; set; }
+    public string? last_maint_logon { get; set; }
+    public int zone { get; set; }
+    public string? store { get; set; }
+    public string? update_reference { get; set; }
+
+    // New fields based on your SQL
+    public string? serial { get; set; }           // maps to serial column (GEA, HAIER, or track_history)
+    public string? reject_reason { get; set; }   // maps to ci.last_maint_logon
+
+    // Optional: if you want order_no from serial_track_sod
+    public string? order_no { get; set; }        // maps to stod.order_no
 }
+
+
 public class TestingInfo
 {
     public int Task { get; set; }
