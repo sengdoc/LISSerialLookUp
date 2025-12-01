@@ -212,17 +212,18 @@
                         tr.classList.add("group-row");
                         tr.style.display = "none";
                         tr.innerHTML = `
-                <td>${t.task}</td>
-                <td>${t.run}</td>
-                <td>${t.testPart}</td>
-                <td>${t.description}</td>
-                <td>${t.testResult}</td>
-                <td>${t.testFault}</td>
-                <td class="status-icon">${t.testStatus === "F" ? '❌' : '✅'}</td>
-                <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
-            `;
+        <td>${t.task}</td>
+        <td>${t.run}</td>
+        <td>${t.testPart}</td>
+        <td>${t.description || '-'}</td>
+        <td>${t.testResult || '-'}</td>
+        <td>${t.testFault || '-'}</td>
+        <td class="status-icon">${t.testStatus === "F" ? '❌' : '✅'}</td>
+        <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
+    `;
                         tbody.appendChild(tr);
                     });
+
                 });
             });
 
