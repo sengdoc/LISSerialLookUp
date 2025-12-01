@@ -19,14 +19,14 @@ body, html {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--bg);
     color: var(--text-dark);
-    font-size: 16px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.4;
 }
 
 .section {
-    margin: 20px auto;
+    margin: 8px auto;
     background: #fff;
-    padding: 30px;
+    padding: 12px;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     max-width: 1800px;
@@ -34,8 +34,8 @@ body, html {
 
 /* Inputs & Buttons */
 input, button {
-    padding: 12px 14px;
-    font-size: 16px;
+    padding: 10px 10px;
+    font-size: 14px;
     margin-right: 5px;
     border-radius: 6px;
     border: 1px solid var(--light-gray);
@@ -94,13 +94,13 @@ tr:hover {
     background-color: var(--primary);
     color: white;
     cursor: pointer;
-    padding: 18px 20px;
+    padding: 12px 10px;
     width: 100%;
     border: none;
     text-align: left;
-    font-size: 18px;
+    font-size: 15px;
     border-radius: 6px;
-    margin-top: 10px;
+    margin-top: 8px;
     transition: background 0.2s;
 }
 
@@ -128,10 +128,10 @@ tr:hover {
 }
 
     .group-run-header td {
-        padding: 16px 18px;
-        border-radius: 6px;
+        padding: 4px 4px;
+        border-radius: 3px;
         transition: background 0.2s;
-        font-size: 19px;
+        font-size: 15px;
     }
 
         .group-run-header td:hover {
@@ -154,7 +154,7 @@ tr:hover {
 
 /* Status Icons – Bigger */
 .status-icon {
-    font-size: 23px; /* bigger for high visibility */
+    font-size: 20px; /* bigger for high visibility */
     width: 40px; /* wider to keep it centered */
     text-align: center;
 }
@@ -209,7 +209,7 @@ tr:hover {
 
     .two-tables-grid th, .two-tables-grid td {
         font-size: 15px;
-        padding: 12px 10px;
+        padding: 5px 10px;
         border: 1px solid #e1e4e8;
         text-align: left;
     }

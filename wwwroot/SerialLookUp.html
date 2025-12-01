@@ -14,16 +14,21 @@
     </div>
 
     <div class="section left-card">
-        <!-- Search input -->
-        <div>
-            <input type="text" id="serialInput" placeholder="Enter serial number">
-            <button onclick="loadData()">Search</button>
-        </div>
+    
 
         <div class="two-tables-grid">
+           
             <!-- Product Details -->
             <div>
-                <h3>Product Details</h3>
+                <h2>
+                    Serial Lookup (Live)
+                </h2>
+                <!-- Search input -->
+                <div>
+                    <input type="text" id="serialInput" placeholder="Enter serial number">
+                    <button onclick="loadData()">Search</button>
+                </div>
+
                 <table>
                     <tbody>
                         <tr><th>Serial FPA</th><td id="serialFPA"></td></tr>
@@ -67,10 +72,20 @@
         <!-- Testing Information -->
         <button class="collapsible active">Testing Information</button>
         <div class="content" id="testing-content">
+            <div style="margin-bottom: 2px;">
+                <!-- Export buttons as icons with text -->
+                <!--<button onclick="exportTestingCSV()" title="Export CSV" style="font-size:16px; margin-right:5px; background: none; border: none; cursor: pointer; color: #333; display: flex; align-items: center;">
+                    📄 <span style="margin-left: 5px;">Export CSV</span>
+                </button>-->
+                <button onclick="exportTestingExcel()" title="Export Excel" style="font-size:16px; background: none; border: none; cursor: pointer; color: #333; display: flex; align-items: center;">
+                    📊 <span style="margin-left: 2px;">Export Excel</span>
+                </button>
+            </div>
             <table id="testing-table">
                 <tbody></tbody>
             </table>
         </div>
+
 
         <!-- Rework Records -->
         <button class="collapsible active">Rework Records</button>
@@ -238,7 +253,6 @@
                 });
             });
 
-
             // ---------------- Rework table ----------------
             if (data.reworkRecords && data.reworkRecords.length > 0) {
                 data.reworkRecords.forEach(r => {
@@ -288,7 +302,123 @@
         btn.addEventListener("click", () => {
             btn.classList.toggle("active");
             const content = btn.nextElementSibling;
-            content.style.display = (content.style.display === "block") ? "none" : "block";
+            // Toggle visibility of the table inside the collapsible section
+            if (content.style.display === "none" || content.style.display === "") {
+                content.style.display = "block"; // Show table
+            } else {
+                content.style.display = "none"; // Hide table
+            }
         });
     });
+
+    // Convert icon to letter for export
+    function convertStatusIcon(cellContent) {
+        if (cellContent === '✅') return 'P';
+        if (cellContent === '❌') return 'F';
+        return cellContent || "-";
+    }
+
+    // Column headers for export
+    const testingHeaders = [
+        "Part",
+        "Serial",
+        "Task",
+        "Run",
+        "Test Part",
+        "Description",
+        "Test Result",
+        "Test Fault",
+        "Status",
+        "Date Tested"
+    ];
+
+    // Generate filename with Serial + timestamp
+    function getExportFilename() {
+        const serial = document.getElementById("serialFPA").textContent.trim() || "unknown";
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        const h = String(now.getHours()).padStart(2, "0");
+        const min = String(now.getMinutes()).padStart(2, "0");
+        const s = String(now.getSeconds()).padStart(2, "0");
+        //return `${serial}_${y}${m}${d}_${h}${min}${s}`;
+        return `${serial}_${y}${m}${d}`;
+    }
+
+    // Export Testing Table to CSV
+    function exportTestingCSV() {
+        const table = document.getElementById("testing-table");
+        const partFull = document.getElementById("part").textContent.trim() || "-";
+        const part = partFull.split(' ')[0];
+        const serial = document.getElementById("serialFPA").textContent.trim() || "-";
+
+        let csv = [];
+        csv.push(testingHeaders.join(",")); // header
+
+        for (let row of table.rows) {
+            if (row.classList.contains("group-run-header")) continue; // skip header rows
+
+            let rowData = [part, serial];
+            for (let cell of row.cells) {
+                let text = convertStatusIcon(cell.textContent.trim()).replace(/,/g, "");
+                if (!text) text = "-";
+                rowData.push(text);
+            }
+            csv.push(rowData.join(","));
+        }
+
+        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${getExportFilename()}.csv`;
+        link.click();
+    }
+
+    // Export Testing Table to Excel
+    function exportTestingExcel() {
+        const table = document.getElementById("testing-table");
+        const partFull = document.getElementById("part").textContent.trim() || "-";
+        const part = partFull.split(' ')[0];
+        const serial = document.getElementById("serialFPA").textContent.trim() || "-";
+
+        let excelData = [];
+        excelData.push(testingHeaders); // header
+
+        for (let row of table.rows) {
+            if (row.classList.contains("group-run-header")) continue;
+
+            let rowData = [part, serial];
+            for (let cell of row.cells) {
+                let text = convertStatusIcon(cell.textContent.trim());
+                if (!text) text = "-";
+                rowData.push(text);
+            }
+            excelData.push(rowData);
+        }
+
+        if (window.XLSX) {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            XLSX.utils.book_append_sheet(wb, ws, "Testing");
+            XLSX.writeFile(wb, `${getExportFilename()}.xlsx`);
+        } else {
+            const blob = new Blob([excelData.map(r => r.join("\t")).join("\n")], { type: "application/vnd.ms-excel" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${getExportFilename()}.xls`;
+            link.click();
+        }
+    }
+
+
+    
+
+
+    document.getElementById("serialInput").addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            loadData(); // Call the loadData function when Enter is pressed
+        }
+    });
+
 </script>
