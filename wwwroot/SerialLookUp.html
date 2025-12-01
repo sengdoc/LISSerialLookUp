@@ -133,7 +133,9 @@
 
             const statusEl = document.getElementById("status");
             statusEl.textContent = pd.status || "-";
-            statusEl.className = pd.status ? `status-${pd.status}` : '';
+            statusEl.classList.remove("status-P", "status-R", "status-D", "status-N");
+            if (pd.status) statusEl.classList.add(`status-${pd.status}`);
+
 
             // ---------------- Clear old tables ----------------
             ["#tracking-table tbody", "#testing-table tbody", "#rework-table tbody"].forEach(sel => {
@@ -147,7 +149,7 @@
                     tr.innerHTML = `
                     <td>${t.workcell}</td>
                     <td>${t.task}</td>
-                    <td>${t.status}</td>
+                    <td class="status-${t.status}">${t.status}</td>
                     <td>${t.grade}</td>
                     <td>${t.zone}</td>
                     <td>${t.store}</td>
@@ -166,74 +168,75 @@
             }
 
             // ---------------- Testing table ----------------
-            if (data.testing && data.testing.length > 0) {
-                // Group by task/run
-                const grouped = {};
-                data.testing.forEach(t => {
-                    if (!grouped[t.task]) grouped[t.task] = {};
-                    if (!grouped[t.task][t.run]) grouped[t.task][t.run] = [];
-                    grouped[t.task][t.run].push(t);
-                });
+            // Grouping and rendering testing table
+            const grouped = {};
+            data.testing.forEach(t => {
+                if (!grouped[t.task]) grouped[t.task] = {};
+                if (!grouped[t.task][t.run]) grouped[t.task][t.run] = [];
+                grouped[t.task][t.run].push(t);
+            });
 
-                const tbody = document.querySelector("#testing-table tbody");
-                Object.keys(grouped).forEach(task => {
-                    const runs = grouped[task];
-                    const runKeys = Object.keys(runs).sort((a, b) => a - b);
-                    const lastRunKey = runKeys[runKeys.length - 1];
-                    const lastRunRows = runs[lastRunKey];
-                    const lastRunHasFail = lastRunRows.some(t => t.taskStatus === "F");
+            const tbody = document.querySelector("#testing-table tbody");
+            Object.keys(grouped).forEach(task => {
+                const runs = grouped[task];
+                const runKeys = Object.keys(runs).sort((a, b) => a - b);
+                const lastRunKey = runKeys[runKeys.length - 1];
+                const lastRunRows = runs[lastRunKey];
 
-                    Object.keys(runs).forEach(run => {
-                        const runRows = runs[run];
-                        const hasFail = runRows.some(t => t.testStatus === "F");
-                        const allPass = runRows.every(t => t.testStatus !== "F");
+                // Keep lastRunHasFail based on taskStatus
+                const lastRunHasFail = lastRunRows.some(t => t.taskStatus === "F");
 
-                        // Use let so we can override for last run
-                        let runIcon = hasFail ? '❌' : '✅';
+                Object.keys(runs).forEach(run => {
+                    const runRows = runs[run];
+                    const hasFail = runRows.some(t => t.testStatus === "F");
 
-                        // Override for last run based on lastRunHasFail
-                        if (run === lastRunKey && lastRunHasFail) runIcon = '❌';
-                        if (run === lastRunKey && !lastRunHasFail) runIcon = '✅';
+                    let runIcon = hasFail ? '❌' : '✅';
 
-                        // Run header row
-                        const runRow = document.createElement("tr");
-                        runRow.classList.add("group-run-header");
+                    // Override for last run based on lastRunHasFail
+                    if (run === lastRunKey && lastRunHasFail) runIcon = '❌';
+                    if (run === lastRunKey && !lastRunHasFail) runIcon = '✅';
 
-                        runRow.innerHTML = `
-        <td colspan="8"><span class="icon">&#9654;</span> ${runIcon} Task: ${task} | Run: ${run}</td>
-    `;
-
-                        runRow.style.fontWeight = "bold";
-                        runRow.style.cursor = "pointer";
-                        tbody.appendChild(runRow);
-
-                        // Individual test rows
-                        runRows.forEach(t => {
-                            const tr = document.createElement("tr");
-                            tr.classList.add("group-row");
-                            tr.style.display = "none";
-                            tr.innerHTML = `
-            <td>${t.task}</td>
-            <td>${t.run}</td>
-            <td>${t.testPart}</td>
-            <td>${t.description}</td>
-            <td>${t.testResult}</td>
-            <td>${t.testFault}</td>
-            <td style="text-align:center;">${t.testStatus === "F" ? '❌' : '✅'}</td>
-            <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
+                    // Run header row
+                    const runRow = document.createElement("tr");
+                    runRow.classList.add("group-run-header");
+                    runRow.innerHTML = `
+            <td colspan="8"><span class="status-icon">${runIcon}</span> Task: ${task} | Run: ${run}</td>
         `;
-                            tbody.appendChild(tr);
-                        });
-                    });
+                    runRow.style.fontWeight = "bold";
+                    runRow.style.cursor = "pointer";
+                    tbody.appendChild(runRow);
 
+                    // Individual test rows
+                    runRows.forEach(t => {
+                        const tr = document.createElement("tr");
+                        tr.classList.add("group-row");
+                        tr.style.display = "none";
+                        tr.innerHTML = `
+                <td>${t.task}</td>
+                <td>${t.run}</td>
+                <td>${t.testPart}</td>
+                <td>${t.description}</td>
+                <td>${t.testResult}</td>
+                <td>${t.testFault}</td>
+                <td class="status-icon">${t.testStatus === "F" ? '❌' : '✅'}</td>
+                <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
+            `;
+                        tbody.appendChild(tr);
+                    });
                 });
-                attachTestingToggle();
-            } else {
-                const tbody = document.querySelector("#testing-table tbody");
-                const tr = document.createElement("tr");
-                tr.innerHTML = `<td colspan="8" style="text-align:center;">No testing data found</td>`;
-                tbody.appendChild(tr);
-            }
+            });
+
+            // Attach toggle for group rows
+            tbody.querySelectorAll(".group-run-header").forEach(header => {
+                header.addEventListener("click", () => {
+                    let next = header.nextElementSibling;
+                    while (next && next.classList.contains("group-row")) {
+                        next.style.display = (next.style.display === "none") ? "table-row" : "none";
+                        next = next.nextElementSibling;
+                    }
+                });
+            });
+
 
             // ---------------- Rework table ----------------
             if (data.reworkRecords && data.reworkRecords.length > 0) {

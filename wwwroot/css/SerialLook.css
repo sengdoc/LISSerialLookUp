@@ -1,5 +1,5 @@
 ﻿/* ===============================
-   Modern Minimal Clear UI – Larger Font & Icons
+   Modern Minimal Clear UI – Big Icons
    =============================== */
 :root {
     --primary-dark: #2C3E50; /* main header, table headers */
@@ -19,7 +19,7 @@ body, html {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--bg);
     color: var(--text-dark);
-    font-size: 16px; /* increased base font */
+    font-size: 16px;
     line-height: 1.6;
 }
 
@@ -66,7 +66,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 12px;
-    font-size: 15px; /* larger table font */
+    font-size: 15px;
 }
 
 th, td {
@@ -98,7 +98,7 @@ tr:hover {
     width: 100%;
     border: none;
     text-align: left;
-    font-size: 18px; /* larger font */
+    font-size: 18px;
     border-radius: 6px;
     margin-top: 10px;
     transition: background 0.2s;
@@ -117,57 +117,48 @@ tr:hover {
 .group-header {
     cursor: pointer;
     font-weight: bold;
+    
 }
 
 /* Run header row */
 .group-run-header {
     font-weight: bold;
+   
     cursor: pointer;
 }
 
     .group-run-header td {
-        padding: 16px 18px; /* larger clickable area */
+        padding: 16px 18px;
         border-radius: 6px;
         transition: background 0.2s;
-        font-size: 16px;
+        font-size: 19px;
     }
 
         .group-run-header td:hover {
-            background: #dcdcdc; /* subtle hover */
+            background: #dcdcdc;
         }
 
 /* Spacing between rows */
 #testing-table {
     border-collapse: separate;
-    border-spacing: 0 10px; /* vertical spacing */
+    border-spacing: 0 10px;
 }
 
 /* Individual test rows */
 .group-row td {
-    padding: 14px 16px; /* bigger padding */
+    padding: 14px 16px;
     background: #ffffff;
     border-radius: 4px;
-    font-size: 15px; /* slightly larger text */
+    font-size: 15px;
 }
 
-/* Status icons */
+/* Status Icons – Bigger */
 .status-icon {
-    font-size: 24px; /* bigger icon */
-    width: 28px; /* wider for alignment */
+    font-size: 23px; /* bigger for high visibility */
+    width: 40px; /* wider to keep it centered */
     text-align: center;
 }
 
-/* Icon rotation */
-.icon {
-    display: inline-block;
-    margin-right: 10px; /* slightly larger spacing */
-    font-size: 18px; /* larger arrow icon */
-    transition: transform 0.3s;
-}
-
-    .icon.rotate {
-        transform: rotate(90deg);
-    }
 
 /* Loading overlay + spinner */
 .loading-overlay {
@@ -185,7 +176,7 @@ tr:hover {
 }
 
 .spinner {
-    width: 60px; /* larger spinner */
+    width: 60px;
     height: 60px;
     border: 6px solid #f3f3f3;
     border-top: 6px solid var(--accent);
@@ -222,3 +213,46 @@ tr:hover {
         border: 1px solid #e1e4e8;
         text-align: left;
     }
+
+
+/* Tracking table status colors */
+#tracking-table td.status-P {
+    color: #27AE60; /* GREEN for P */
+    font-weight: bold;
+}
+
+#tracking-table td.status-R {
+    color: #3498db; /* BLUE for R */
+    font-weight: bold;
+}
+
+#tracking-table td.status-D {
+    color: #8e44ad; /* PURPLE for D */
+    font-weight: bold;
+}
+
+#tracking-table td.status-N {
+    color: #e74c3c; /* RED for N */
+    font-weight: bold;
+}
+
+
+.status-P {
+    color: #27AE60;
+    font-weight: bold;
+}
+
+.status-R {
+    color: #3498db;
+    font-weight: bold;
+}
+
+.status-D {
+    color: #8e44ad;
+    font-weight: bold;
+}
+
+.status-N {
+    color: #e74c3c;
+    font-weight: bold;
+}
