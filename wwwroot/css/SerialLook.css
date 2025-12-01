@@ -1,14 +1,12 @@
 ﻿/* ===============================
-   Modern Minimal Clear UI
+   Modern Minimal Clear UI – Larger Font & Icons
    =============================== */
 :root {
     --primary-dark: #2C3E50; /* main header, table headers */
     --primary: #34495E; /* section background, collapsibles */
     --accent: #1ABC9C; /* buttons, highlights */
-    --success: #27AE60; /* pass status */
-    --danger: #C0392B; /* fail status */
-    --light-gray: #BDC3C7; /* group headers, row stripes */
-    --bg: #F9FAFB; /* body background (lighter than before) */
+    --light-gray: #BDC3C7; /* borders, group headers */
+    --bg: #F9FAFB; /* body background */
     --text-dark: #2C3E50; /* main text */
     --text-light: #7F8C8D; /* secondary text */
 }
@@ -21,14 +19,14 @@ body, html {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--bg);
     color: var(--text-dark);
-    font-size: 14px;
+    font-size: 16px; /* increased base font */
     line-height: 1.6;
 }
 
 .section {
     margin: 20px auto;
     background: #fff;
-    padding: 25px;
+    padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     max-width: 1800px;
@@ -36,8 +34,8 @@ body, html {
 
 /* Inputs & Buttons */
 input, button {
-    padding: 10px 12px;
-    font-size: 14px;
+    padding: 12px 14px;
+    font-size: 16px;
     margin-right: 5px;
     border-radius: 6px;
     border: 1px solid var(--light-gray);
@@ -67,12 +65,12 @@ button {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 14px;
+    margin-top: 12px;
+    font-size: 15px; /* larger table font */
 }
 
 th, td {
-    padding: 12px 10px;
+    padding: 14px 12px;
     border: 1px solid #e1e4e8;
     text-align: left;
 }
@@ -91,37 +89,16 @@ tr:hover {
     background: #f1f5f8;
 }
 
-/* Status Colors */
-.status-P {
-    color: var(--success);
-    font-weight: bold;
-}
-
-.status-R {
-    color: var(--danger);
-    font-weight: bold;
-}
-
-.status-D {
-    color: #8e44ad;
-    font-weight: bold;
-}
-
-.status-N {
-    color: #f39c12;
-    font-weight: bold;
-}
-
 /* Collapsible */
 .collapsible {
     background-color: var(--primary);
     color: white;
     cursor: pointer;
-    padding: 14px 16px;
+    padding: 18px 20px;
     width: 100%;
     border: none;
     text-align: left;
-    font-size: 15px;
+    font-size: 18px; /* larger font */
     border-radius: 6px;
     margin-top: 10px;
     transition: background 0.2s;
@@ -133,28 +110,59 @@ tr:hover {
 
 .content {
     display: block;
-    padding: 12px 0;
+    padding: 14px 0;
 }
 
 /* Task group rows */
 .group-header {
-    background: #f5f7fa;
     cursor: pointer;
     font-weight: bold;
 }
 
+/* Run header row */
 .group-run-header {
-    background: #ebeff2;
+    font-weight: bold;
     cursor: pointer;
-    font-weight: normal;
-    padding-left: 20px;
 }
 
-/* Icon */
+    .group-run-header td {
+        padding: 16px 18px; /* larger clickable area */
+        border-radius: 6px;
+        transition: background 0.2s;
+        font-size: 16px;
+    }
+
+        .group-run-header td:hover {
+            background: #dcdcdc; /* subtle hover */
+        }
+
+/* Spacing between rows */
+#testing-table {
+    border-collapse: separate;
+    border-spacing: 0 10px; /* vertical spacing */
+}
+
+/* Individual test rows */
+.group-row td {
+    padding: 14px 16px; /* bigger padding */
+    background: #ffffff;
+    border-radius: 4px;
+    font-size: 15px; /* slightly larger text */
+}
+
+/* Status icons */
+.status-icon {
+    font-size: 24px; /* bigger icon */
+    width: 28px; /* wider for alignment */
+    text-align: center;
+}
+
+/* Icon rotation */
 .icon {
     display: inline-block;
-    margin-right: 8px;
-    transition: transform 0.2s;
+    margin-right: 10px; /* slightly larger spacing */
+    font-size: 18px; /* larger arrow icon */
+    transition: transform 0.3s;
 }
 
     .icon.rotate {
@@ -177,13 +185,13 @@ tr:hover {
 }
 
 .spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid var(--accent);
+    width: 60px; /* larger spinner */
+    height: 60px;
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid var(--accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 @keyframes spin {
@@ -209,7 +217,8 @@ tr:hover {
     }
 
     .two-tables-grid th, .two-tables-grid td {
-        padding: 10px;
+        font-size: 15px;
+        padding: 12px 10px;
         border: 1px solid #e1e4e8;
         text-align: left;
     }

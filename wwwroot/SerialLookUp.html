@@ -91,188 +91,200 @@
         </div>
     </div>
 
-    <script>
-        function formatDate(dt) {
-            const d = dt.getDate().toString().padStart(2, '0');
-            const m = (dt.getMonth() + 1).toString().padStart(2, '0');
-            const y = dt.getFullYear();
-            const h = dt.getHours().toString().padStart(2, '0');
-            const min = dt.getMinutes().toString().padStart(2, '0');
-            const s = dt.getSeconds().toString().padStart(2, '0');
-            return `${d}/${m}/${y} : ${h}:${min}:${s}`;
-        }
 
-        async function loadData() {
-            const serial = document.getElementById("serialInput").value.trim();
-            if (!serial) { alert("Please enter a serial number."); return; }
-
-            const overlay = document.getElementById("loading");
-            overlay.style.display = "flex";
-
-            try {
-                const response = await fetch(`/api/Product/${serial}`);
-                overlay.style.display = "none";
-                if (!response.ok) { alert("Product not found."); return; }
-
-                const data = await response.json();
-
-                // Product Details
-                const pd = data.productDetails || {};
-                document.getElementById("serialFPA").textContent = pd.serialFPA || "-";
-                document.getElementById("serialGEA").textContent = pd.serialGEA || "-";
-                document.getElementById("serialHAIER").textContent = pd.serialHAIER || "-";
-                document.getElementById("part").textContent = pd.part || "-";
-                document.getElementById("partIssue").textContent = pd.partIssue || "-";
-                document.getElementById("serialIssueDate").textContent = pd.serialIssueDate ? formatDate(new Date(pd.serialIssueDate)) : "-";
-                document.getElementById("vaI_FoamCode").textContent = pd.vaI_FoamCode || "-";
-
-                const statusEl = document.getElementById("status");
-                statusEl.textContent = pd.status || "-";
-                statusEl.className = pd.status ? `status-${pd.status}` : '';
-
-                // Clear old tables
-                ["#tracking-table tbody", "#testing-table tbody", "#rework-table tbody"].forEach(sel => {
-                    document.querySelector(sel).innerHTML = "";
-                });
-
-                // Tracking table
-                if (data.tracking && data.tracking.length > 0) {
-                    data.tracking.forEach(t => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                                <td>${t.workcell}</td>
-                                <td>${t.task}</td>
-                                <td class="status-${t.status}">${t.status}</td>
-                                <td>${t.grade}</td>
-                                <td>${t.zone}</td>
-                                <td>${t.store}</td>
-                                <td>${t.last_maint ? formatDate(new Date(t.last_maint)) : '-'}</td>
-                                <td>${t.last_maint_logon || '-'}</td>
-                                <td>${t.update_reference || '-'}</td>
-                                <td>${t.order_no || '-'}</td>
-                                <td>${t.reject_reason || '-'}</td>
-                            `;
-                        document.querySelector("#tracking-table tbody").appendChild(tr);
-                    });
-                } else {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `<td colspan="11" style="text-align:center;">No tracking data found</td>`;
-                    document.querySelector("#tracking-table tbody").appendChild(tr);
-                }
-
-                // Testing table
-                if (data.testing && data.testing.length > 0) {
-                    // Grouping by task/run for collapsible display
-                    const grouped = {};
-                    data.testing.forEach(t => {
-                        if (!grouped[t.task]) grouped[t.task] = {};
-                        if (!grouped[t.task][t.run]) grouped[t.task][t.run] = [];
-                        grouped[t.task][t.run].push(t);
-                    });
-
-                    const tbody = document.querySelector("#testing-table tbody");
-                    Object.keys(grouped).forEach(task => {
-                        const runs = grouped[task];
-                        const runKeys = Object.keys(runs).sort((a, b) => a - b);
-                        const lastRunKey = runKeys[runKeys.length - 1];
-                        const lastRunRows = runs[lastRunKey];
-                        const lastRunHasFail = lastRunRows.some(t => t.testStatus === "F");
-
-                        Object.keys(runs).forEach(run => {
-                            const runRows = runs[run];
-                            const hasFail = runRows.some(t => t.testStatus === "F");
-                            const allPass = runRows.every(t => t.testStatus !== "F");
-
-                            const runRow = document.createElement("tr");
-                            runRow.classList.add("group-run-header");
-                            if (hasFail) runRow.style.background = "#ff6b6b";
-                            else if (allPass) runRow.style.background = "#58d68d";
-                            if (run === lastRunKey && lastRunHasFail) runRow.style.background = "#ff6b6b";
-                            runRow.innerHTML = `
-                                    <td><span class="icon">&#9654;</span> Task: ${task}</td>
-                                    <td colspan="3">Run: ${run}</td>
-                                `;
-                            runRow.style.fontWeight = "bold";
-                            runRow.style.cursor = "pointer";
-                            tbody.appendChild(runRow);
-
-                            // Test rows
-                            runRows.forEach(t => {
-                                const tr = document.createElement("tr");
-                                tr.classList.add("group-row");
-                                tr.style.display = "none";
-                                tr.innerHTML = `
-                                        <td>${t.task}</td>
-                                        <td>${t.run}</td>
-                                        <td>${t.testPart}</td>
-                                        <td>${t.description}</td>
-                                        <td>${t.testResult}</td>
-                                        <td>${t.testFault}</td>
-                                        <td class="status-${t.testStatus}">${t.testStatus}</td>
-                                        <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
-                                    `;
-                                tbody.appendChild(tr);
-                            });
-                        });
-                    });
-                    attachTestingToggle();
-                } else {
-                    const tbody = document.querySelector("#testing-table tbody");
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `<td colspan="8" style="text-align:center;">No testing data found</td>`;
-                    tbody.appendChild(tr);
-                }
-
-                // Rework table
-                if (data.reworkRecords && data.reworkRecords.length > 0) {
-                    data.reworkRecords.forEach(r => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                                <td>${r.part}</td>
-                                <td>${r.dateRecorded ? formatDate(new Date(r.dateRecorded)) : "-"}</td>
-                                <td>${r.areaRecorded}</td>
-                                <td>${r.rwkRepairCode}</td>
-                                <td>${r.rwkFaultCode}</td>
-                                <td>${r.mold}</td>
-                            `;
-                        document.querySelector("#rework-table tbody").appendChild(tr);
-                    });
-                } else {
-                    const tbody = document.querySelector("#rework-table tbody");
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `<td colspan="6" style="text-align:center;">No rework records found</td>`;
-                    tbody.appendChild(tr);
-                }
-
-            } catch (err) {
-                overlay.style.display = "none";
-                console.error(err);
-                alert("Failed to load product data.");
-            }
-        }
-
-        function attachTestingToggle() {
-            const tbody = document.querySelector("#testing-table tbody");
-            tbody.querySelectorAll(".group-run-header").forEach(header => {
-                header.addEventListener("click", () => {
-                    const icon = header.querySelector(".icon");
-                    if (icon) icon.classList.toggle("rotate");
-                    let next = header.nextElementSibling;
-                    while (next && next.classList.contains("group-row")) {
-                        next.style.display = (next.style.display === "none") ? "table-row" : "none";
-                        next = next.nextElementSibling;
-                    }
-                });
-            });
-        }
-
-        document.querySelectorAll(".collapsible").forEach(btn => {
-            btn.addEventListener("click", () => {
-                btn.classList.toggle("active");
-                const content = btn.nextElementSibling;
-                content.style.display = (content.style.display === "block") ? "none" : "block";
-            });
-        });
-    </script>
 </body>
 </html>
+
+
+<script>
+    function formatDate(dt) {
+        const d = dt.getDate().toString().padStart(2, '0');
+        const m = (dt.getMonth() + 1).toString().padStart(2, '0');
+        const y = dt.getFullYear();
+        const h = dt.getHours().toString().padStart(2, '0');
+        const min = dt.getMinutes().toString().padStart(2, '0');
+        const s = dt.getSeconds().toString().padStart(2, '0');
+        return `${d}/${m}/${y} : ${h}:${min}:${s}`;
+    }
+
+    async function loadData() {
+        const serial = document.getElementById("serialInput").value.trim();
+        if (!serial) { alert("Please enter a serial number."); return; }
+
+        const overlay = document.getElementById("loading");
+        overlay.style.display = "flex";
+
+        try {
+            const response = await fetch(`/api/Product/${serial}`);
+            overlay.style.display = "none";
+            if (!response.ok) { alert("Product not found."); return; }
+
+            const data = await response.json();
+
+            // ---------------- Product Details ----------------
+            const pd = data.productDetails || {};
+            document.getElementById("serialFPA").textContent = pd.serialFPA || "-";
+            document.getElementById("serialGEA").textContent = pd.serialGEA || "-";
+            document.getElementById("serialHAIER").textContent = pd.serialHAIER || "-";
+            document.getElementById("part").textContent = pd.part || "-";
+            document.getElementById("partIssue").textContent = pd.partIssue || "-";
+            document.getElementById("serialIssueDate").textContent = pd.serialIssueDate ? formatDate(new Date(pd.serialIssueDate)) : "-";
+            document.getElementById("vaI_FoamCode").textContent = pd.vaI_FoamCode || "-";
+
+            const statusEl = document.getElementById("status");
+            statusEl.textContent = pd.status || "-";
+            statusEl.className = pd.status ? `status-${pd.status}` : '';
+
+            // ---------------- Clear old tables ----------------
+            ["#tracking-table tbody", "#testing-table tbody", "#rework-table tbody"].forEach(sel => {
+                document.querySelector(sel).innerHTML = "";
+            });
+
+            // ---------------- Tracking table ----------------
+            if (data.tracking && data.tracking.length > 0) {
+                data.tracking.forEach(t => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                    <td>${t.workcell}</td>
+                    <td>${t.task}</td>
+                    <td>${t.status}</td>
+                    <td>${t.grade}</td>
+                    <td>${t.zone}</td>
+                    <td>${t.store}</td>
+                    <td>${t.last_maint ? formatDate(new Date(t.last_maint)) : '-'}</td>
+                    <td>${t.last_maint_logon || '-'}</td>
+                    <td>${t.update_reference || '-'}</td>
+                    <td>${t.order_no || '-'}</td>
+                    <td>${t.reject_reason || '-'}</td>
+                `;
+                    document.querySelector("#tracking-table tbody").appendChild(tr);
+                });
+            } else {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td colspan="11" style="text-align:center;">No tracking data found</td>`;
+                document.querySelector("#tracking-table tbody").appendChild(tr);
+            }
+
+            // ---------------- Testing table ----------------
+            if (data.testing && data.testing.length > 0) {
+                // Group by task/run
+                const grouped = {};
+                data.testing.forEach(t => {
+                    if (!grouped[t.task]) grouped[t.task] = {};
+                    if (!grouped[t.task][t.run]) grouped[t.task][t.run] = [];
+                    grouped[t.task][t.run].push(t);
+                });
+
+                const tbody = document.querySelector("#testing-table tbody");
+                Object.keys(grouped).forEach(task => {
+                    const runs = grouped[task];
+                    const runKeys = Object.keys(runs).sort((a, b) => a - b);
+                    const lastRunKey = runKeys[runKeys.length - 1];
+                    const lastRunRows = runs[lastRunKey];
+                    const lastRunHasFail = lastRunRows.some(t => t.taskStatus === "F");
+
+                    Object.keys(runs).forEach(run => {
+                        const runRows = runs[run];
+                        const hasFail = runRows.some(t => t.testStatus === "F");
+                        const allPass = runRows.every(t => t.testStatus !== "F");
+
+                        // Use let so we can override for last run
+                        let runIcon = hasFail ? '❌' : '✅';
+
+                        // Override for last run based on lastRunHasFail
+                        if (run === lastRunKey && lastRunHasFail) runIcon = '❌';
+                        if (run === lastRunKey && !lastRunHasFail) runIcon = '✅';
+
+                        // Run header row
+                        const runRow = document.createElement("tr");
+                        runRow.classList.add("group-run-header");
+
+                        runRow.innerHTML = `
+        <td colspan="8"><span class="icon">&#9654;</span> ${runIcon} Task: ${task} | Run: ${run}</td>
+    `;
+
+                        runRow.style.fontWeight = "bold";
+                        runRow.style.cursor = "pointer";
+                        tbody.appendChild(runRow);
+
+                        // Individual test rows
+                        runRows.forEach(t => {
+                            const tr = document.createElement("tr");
+                            tr.classList.add("group-row");
+                            tr.style.display = "none";
+                            tr.innerHTML = `
+            <td>${t.task}</td>
+            <td>${t.run}</td>
+            <td>${t.testPart}</td>
+            <td>${t.description}</td>
+            <td>${t.testResult}</td>
+            <td>${t.testFault}</td>
+            <td style="text-align:center;">${t.testStatus === "F" ? '❌' : '✅'}</td>
+            <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
+        `;
+                            tbody.appendChild(tr);
+                        });
+                    });
+
+                });
+                attachTestingToggle();
+            } else {
+                const tbody = document.querySelector("#testing-table tbody");
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td colspan="8" style="text-align:center;">No testing data found</td>`;
+                tbody.appendChild(tr);
+            }
+
+            // ---------------- Rework table ----------------
+            if (data.reworkRecords && data.reworkRecords.length > 0) {
+                data.reworkRecords.forEach(r => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                    <td>${r.part}</td>
+                    <td>${r.dateRecorded ? formatDate(new Date(r.dateRecorded)) : "-"}</td>
+                    <td>${r.areaRecorded}</td>
+                    <td>${r.rwkRepairCode}</td>
+                    <td>${r.rwkFaultCode}</td>
+                    <td>${r.mold}</td>
+                `;
+                    document.querySelector("#rework-table tbody").appendChild(tr);
+                });
+            } else {
+                const tbody = document.querySelector("#rework-table tbody");
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td colspan="6" style="text-align:center;">No rework records found</td>`;
+                tbody.appendChild(tr);
+            }
+
+        } catch (err) {
+            overlay.style.display = "none";
+            console.error(err);
+            alert("Failed to load product data.");
+        }
+    }
+
+    // Toggle test group rows
+    function attachTestingToggle() {
+        const tbody = document.querySelector("#testing-table tbody");
+        tbody.querySelectorAll(".group-run-header").forEach(header => {
+            header.addEventListener("click", () => {
+                const icon = header.querySelector(".icon");
+                if (icon) icon.classList.toggle("rotate");
+                let next = header.nextElementSibling;
+                while (next && next.classList.contains("group-row")) {
+                    next.style.display = (next.style.display === "none") ? "table-row" : "none";
+                    next = next.nextElementSibling;
+                }
+            });
+        });
+    }
+
+    // Collapsible sections
+    document.querySelectorAll(".collapsible").forEach(btn => {
+        btn.addEventListener("click", () => {
+            btn.classList.toggle("active");
+            const content = btn.nextElementSibling;
+            content.style.display = (content.style.display === "block") ? "none" : "block";
+        });
+    });
+</script>
