@@ -141,12 +141,12 @@ tr:hover {
 /* Spacing between rows */
 #testing-table {
     border-collapse: separate;
-    border-spacing: 0 10px;
+    border-spacing: 0 5px;
 }
 
 /* Individual test rows */
 .group-row td {
-    padding: 14px 16px;
+    padding: 3px 5px;
     background: #ffffff;
     border-radius: 4px;
     font-size: 15px;
@@ -256,3 +256,24 @@ tr:hover {
     color: #e74c3c;
     font-weight: bold;
 }
+
+
+/* Soft, modern link button */
+.link-btn {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: #e0f7fa; /* soft pastel background */
+    color: #00796b; /* soft teal text */
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+    .link-btn:hover {
+        background-color: #00796b; /* text color becomes background */
+        color: #ffffff; /* text becomes white */
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        border-color: #004d40;
+    }
