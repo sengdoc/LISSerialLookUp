@@ -5,6 +5,8 @@
     <title>Serial Lookup</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" rel="stylesheet">
     <link href="css/SerialLook.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 </head>
 <body>
     <!-- Loading overlay -->
@@ -52,9 +54,10 @@
                             <tr>
                                 <th>Workcell</th>
                                 <th>Task</th>
+                                <th>Store Location</th>
                                 <th>Status</th>
-                                <th>Grade</th>
-                                <th>Zone</th>
+                                <!--<th>Grade</th>
+                                <th>Zone</th>-->
                                 <th>Store</th>
                                 <th>Last Maint</th>
                                 <th>Last Maint Logon</th>
@@ -162,11 +165,10 @@
                 data.tracking.forEach(t => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                    <td>${t.workcell}</td>
+                    <td>${t.workcell}</td>                    
                     <td>${t.task}</td>
+                    <td>${t.store_location}</td>
                     <td class="status-${t.status}">${t.status}</td>
-                    <td>${t.grade}</td>
-                    <td>${t.zone}</td>
                     <td>${t.store}</td>
                     <td>${t.last_maint ? formatDate(new Date(t.last_maint)) : '-'}</td>
                     <td>${t.last_maint_logon || '-'}</td>
@@ -227,15 +229,24 @@
                         tr.classList.add("group-row");
                         tr.style.display = "none";
                         tr.innerHTML = `
-        <td>${t.task}</td>
-        <td>${t.run}</td>
-        <td>${t.testPart}</td>
-        <td>${t.description || '-'}</td>
-        <td>${t.testResult || '-'}</td>
-        <td>${t.testFault || '-'}</td>
-        <td class="status-icon">${t.testStatus === "F" ? '❌' : '✅'}</td>
-        <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
-    `;
+    <td>${t.task}</td>
+    <td>${t.run}</td>
+
+    <td>
+        <a href="http://tiger/LIS_ITEM/ItemCheck/GETPTBYCATASK?Part=&taskChk=&partNo=${t.testPart}"
+           target="_blank"
+           style="color: blue; text-decoration: underline;">
+           ${t.testPart}
+        </a>
+    </td>
+
+    <td>${t.description || '-'}</td>
+    <td>${t.testResult || '-'}</td>
+    <td>${t.testFault || '-'}</td>
+    <td class="status-icon">${t.testStatus === "F" ? '❌' : '✅'}</td>
+    <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
+`;
+
                         tbody.appendChild(tr);
                     });
 
@@ -397,20 +408,12 @@
             excelData.push(rowData);
         }
 
-        if (window.XLSX) {
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            XLSX.utils.book_append_sheet(wb, ws, "Testing");
-            XLSX.writeFile(wb, `${getExportFilename()}.xlsx`);
-        } else {
-            const blob = new Blob([excelData.map(r => r.join("\t")).join("\n")], { type: "application/vnd.ms-excel" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `${getExportFilename()}.xls`;
-            link.click();
-        }
+        // Force XLSX export only
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+        XLSX.utils.book_append_sheet(wb, ws, "Testing");
+        XLSX.writeFile(wb, `${getExportFilename()}.xlsx`);
     }
-
 
     
 
