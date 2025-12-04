@@ -206,14 +206,22 @@
 
             const grouped = {};
             data.testing.forEach(t => {
-                if (!grouped[t.task]) grouped[t.task] = {};
-                if (!grouped[t.task][t.run]) grouped[t.task][t.run] = [];
-                grouped[t.task][t.run].push(t);
+                // Create task object if it doesn't exist
+                if (!grouped[t.task]) grouped[t.task] = {
+                    description: t.taskDescription || '', // store task description here
+                    runs: {}
+                };
+
+                // Create run array if it doesn't exist
+                if (!grouped[t.task].runs[t.run]) grouped[t.task].runs[t.run] = [];
+
+                // Push test row into run array
+                grouped[t.task].runs[t.run].push(t);
             });
 
             const tbody = document.querySelector("#testing-table tbody");
             Object.keys(grouped).forEach(task => {
-                const runs = grouped[task];
+                const runs = grouped[task].runs; // <-- access runs properly
                 const runKeys = Object.keys(runs).sort((a, b) => a - b);
                 const lastRunKey = runKeys[runKeys.length - 1];
                 const lastRunRows = runs[lastRunKey];
@@ -224,66 +232,69 @@
                 Object.keys(runs).forEach(run => {
                     const runRows = runs[run];
                     const hasFail = runRows.some(t => t.testStatus === "F");
-
                     let runIcon = hasFail ? '❌' : '✅';
 
-                    // Override for last run based on lastRunHasFail
-                    if (run === lastRunKey && lastRunHasFail) runIcon = '❌';
-                    if (run === lastRunKey && !lastRunHasFail) runIcon = '✅';
+                    // COMPUTE taskLink
+                    const today = new Date();
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
 
-                    // Run header row
+                    const formatDateYYYYMMDD = dt =>
+                        `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+                    const taskLink =
+                        `http://tiger/QA_LISSummary/ResultPartTest?startDate=${formatDateYYYYMMDD(yesterday)}&endDate=${formatDateYYYYMMDD(tomorrow)}&TaskNo=${task}&PartTestsNo=`;
+
+                    // CREATE run header row
                     const runRow = document.createElement("tr");
                     runRow.classList.add("group-run-header");
+                    const taskDescription = grouped[task].description; // get description for this task
+
                     runRow.innerHTML = `
-    <td colspan="8"><span class="status-icon">${runIcon}</span> Task: ${task} | Run: ${run}</td>
+<tr>
+    <td colspan="8">
+        <span class="status-icon">${runIcon}</span>
+        Task:
+        <a href="${taskLink}" target="_blank" class="link-btn" title="View Task Results">
+            ${task} ${taskDescription}
+        </a>
+        | Run: ${run}
+    </td>
+</tr>
 `;
                     runRow.style.fontWeight = "bold";
                     runRow.style.cursor = "pointer";
                     tbody.appendChild(runRow);
 
-                    // Individual test rows
+                    // CREATE individual test rows
                     runRows.forEach(t => {
                         const tr = document.createElement("tr");
                         tr.classList.add("group-row");
-                        tr.style.display = "none";
+                        tr.style.display = "none"; // hide by default
 
-                        // Compute dates for Task link
-                        const today = new Date();
-                        const yesterday = new Date(today);
-                        yesterday.setDate(today.getDate() - 1);
-                        const tomorrow = new Date(today);
-                        tomorrow.setDate(today.getDate() + 1);
-                        const formatDateYYYYMMDD = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-
-                        const taskLink = `http://tiger/QA_LISSummary/ResultPartTest?startDate=${formatDateYYYYMMDD(yesterday)}&endDate=${formatDateYYYYMMDD(tomorrow)}&TaskNo=${t.task}&PartTestsNo=`;
+                        const testTaskLink = `http://tiger/LIS_ITEM/ItemCheck/GETPTBYCATASK?Part=&taskChk=&partNo=${t.testPart}`;
 
                         tr.innerHTML = `
-        <td>
-            <a href="${taskLink}" target="_blank" class="link-btn" title="View Task Results">
-                ${t.task}
-            </a>
-        </td>
-        <td>${t.run}</td>
-        <td>
-            <a href="http://tiger/LIS_ITEM/ItemCheck/GETPTBYCATASK?Part=&taskChk=&partNo=${t.testPart}"
-               target="_blank"
-               class="link-btn"
-               title="Check Limits">
-               ${t.testPart}
-            </a>
-        </td>
-        <td>${t.description || '-'}</td>
-        <td>${t.testResult || '-'}</td>
-        <td>${t.testFault || '-'}</td>
-        <td class="status-icon">${t.testStatus === "F" ? '❌' : '✅'}</td>
-        <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : "-"}</td>
-    `;
+<td>${t.task}</td>
+<td>${t.run}</td>
+<td>
+    <a href="${testTaskLink}" target="_blank" class="link-btn" title="Check Limits">
+        ${t.testPart}
+    </a>
+</td>
+<td>${t.description || '-'}</td>
+<td>${t.testResult || '-'}</td>
+<td>${t.testFault || '-'}</td>
+<td class="status-icon">${t.testStatus === "F" ? '❌' : '✅'}</td>
+<td>${t.dateTested ? formatDate(new Date(t.dateTested)) : '-'}</td>
+`;
                         tbody.appendChild(tr);
                     });
-
-
                 });
             });
+
 
             // Attach toggle for group rows
             tbody.querySelectorAll(".group-run-header").forEach(header => {
