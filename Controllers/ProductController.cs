@@ -33,15 +33,4 @@ public class ProductController : ControllerBase
 
         return result is not null ? Ok(result) : NotFound();
     }
-
-    // Serve the SerialLookUp.html page
-    //[HttpGet("/SerialLookup")]
-    //public IActionResult SerialLookup()
-    //{
-    //    // Serve wwwroot/SerialLookUp.html
-    //    return PhysicalFile(
-    //        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "SerialLookUp.html"),
-    //        "text/html"
-    //    );
-    //}
 }
