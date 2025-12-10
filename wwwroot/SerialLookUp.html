@@ -78,15 +78,28 @@
             <div style="margin-bottom: 2px;">
                 <!-- Export buttons as icons with text -->
                 <!--<button onclick="exportTestingCSV()" title="Export CSV" style="font-size:16px; margin-right:5px; background: none; border: none; cursor: pointer; color: #333; display: flex; align-items: center;">
-                    📄 <span style="margin-left: 5px;">Export CSV</span>
-                </button>-->
+            📄 <span style="margin-left: 5px;">Export CSV</span>
+        </button>-->
                 <button onclick="exportTestingExcel()" title="Export Excel" style="font-size:16px; background: none; border: none; cursor: pointer; color: #333; display: flex; align-items: center;">
                     📊 <span style="margin-left: 2px;">Export Excel</span>
                 </button>
             </div>
             <table id="testing-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Run</th>
+                        <th>Test Part</th>
+                        <th>Description</th>
+                        <th>Test Result</th>
+                        <th>Test Fault</th>
+                        <th>Status</th>
+                        <th>Date Tested</th>
+                    </tr>
+                </thead>
                 <tbody></tbody>
             </table>
+
         </div>
 
 
@@ -256,11 +269,11 @@
 <tr>
     <td colspan="8">
         <span class="status-icon">${runIcon}</span>
-        Task:
+        Task: ${task}  | Run: ${run}
         <a href="${taskLink}" target="_blank" class="link-btn" title="View Task Results">
-            ${task} ${taskDescription}
+           ${taskDescription}
         </a>
-        | Run: ${run}
+        
     </td>
 </tr>
 `;
@@ -268,7 +281,7 @@
                     runRow.style.cursor = "pointer";
                     tbody.appendChild(runRow);
 
-                    // CREATE individual test rows
+                
                     runRows.forEach(t => {
                         const tr = document.createElement("tr");
                         tr.classList.add("group-row");
@@ -277,21 +290,22 @@
                         const testTaskLink = `http://tiger/LIS_ITEM/ItemCheck/GETPTBYCATASK?Part=&taskChk=&partNo=${t.testPart}`;
 
                         tr.innerHTML = `
-<td>${t.task}</td>
-<td>${t.run}</td>
-<td>
+        <td>${t.task}</td>
+        <td>${t.run}</td>
+        <td>
     <a href="${testTaskLink}" target="_blank" class="link-btn" title="Check Limits">
         ${t.testPart}
     </a>
 </td>
-<td>${t.description || '-'}</td>
-<td>${t.testResult || '-'}</td>
-<td>${t.testFault || '-'}</td>
+        <td>${t.description || '-'}</td>
+        <td>${t.testResult || '-'}</td>
+        <td>${t.testFault || '-'}</td>
 <td class="status-icon">${t.testStatus === "F" ? '❌' : '✅'}</td>
-<td>${t.dateTested ? formatDate(new Date(t.dateTested)) : '-'}</td>
-`;
+        <td>${t.dateTested ? formatDate(new Date(t.dateTested)) : '-'}</td>
+    `;
                         tbody.appendChild(tr);
                     });
+
                 });
             });
 
